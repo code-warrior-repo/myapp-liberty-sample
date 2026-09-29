@@ -28,7 +28,7 @@ The service adapters require the response contracts documented in README.md.
 
 ## Verification of this update
 
-16 backend tests pass, including the browser login/session/CSRF flow and HTTP
+21 backend tests pass, including the browser login/session/CSRF flow and HTTP
 service adapter contracts. Backend and frontend WAR builds pass. The packaged
 backend starts successfully with the embedded container. Checks used the locally
 installed JDK 25 compiler with --release 21; the project still targets JDK 21.
@@ -37,3 +37,5 @@ A live Liberty deployment and the real upstream services have not been tested.
 The separate Liberty XML files were checked for valid XML, distinct ports, isolated
 WAR deployments, and backend-only session configuration. Live Liberty startup and
 reverse-proxy routing still require validation in your deployment environment.
+
+For local HTTP development on separate ports, see LOCAL_DEV.md.

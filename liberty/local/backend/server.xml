@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="Backend API and authenticated sessions">
+  <featureManager>
+    <feature>servlet-6.1</feature>
+  </featureManager>
+  <!-- LOCAL DEVELOPMENT ONLY: loopback HTTP. -->
+  <httpEndpoint id="defaultHttpEndpoint" host="localhost" httpPort="8081" httpsPort="-1" />
+  <httpSession cookieName="MYAPP_SESSION" cookiePath="/backend"
+      cookieHttpOnly="true" cookieSecure="false" cookieSameSite="Lax" invalidationTimeout="30m" />
+  <applicationManager autoExpand="true" />
+  <webApplication id="backend" name="backend" location="backend.war" contextRoot="/backend" />
+</server>

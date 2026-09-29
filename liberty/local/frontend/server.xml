@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="Frontend static application">
+  <featureManager>
+    <feature>servlet-6.1</feature>
+  </featureManager>
+  <!-- LOCAL DEVELOPMENT ONLY: loopback HTTP. -->
+  <httpEndpoint id="defaultHttpEndpoint" host="localhost" httpPort="8080" httpsPort="-1" />
+  <applicationManager autoExpand="true" />
+  <webApplication id="frontend" name="frontend" location="frontend.war" contextRoot="/frontend" />
+</server>

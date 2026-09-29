@@ -25,6 +25,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 @SpringJUnitConfig(SsoFlowTest.Config.class)
 @WebAppConfiguration
+@org.springframework.test.context.TestPropertySource(properties = "app.cors.allowed-origins=http://localhost:8080")
 class SsoFlowTest {
   @Configuration @EnableWebMvc @EnableWebSecurity
   @Import({SecurityConfig.class, DataController.class})
@@ -41,10 +42,10 @@ class SsoFlowTest {
     reset(service);
     when(service.login("jsmith", "secret", "app", "test")).thenReturn(
         new AuthenticatedUser("jsmith", "Jane Smith", "app", List.of("USER")));
-    mvc = webAppContextSetup(context).defaultRequest(get("/").header("Origin", "https://abc.sso.com")).apply(springSecurity()).build();
+    mvc = webAppContextSetup(context).apply(springSecurity()).build();
   }
   private MockHttpSession login() throws Exception {
-    return (MockHttpSession) mvc.perform(post("/api/sso-login").servletPath("/api/sso-login")
+    return (MockHttpSession) mvc.perform(post("/api/sso-login").servletPath("/api/sso-login").header("Origin", "https://abc.sso.com")
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
         .param("userid", "jsmith").param("token", "secret").param("context", "app").param("env", "test"))
         .andExpect(status().isSeeOther()).andExpect(redirectedUrl("/frontend/"))
@@ -64,7 +65,7 @@ class SsoFlowTest {
   @Test void loginReplacesExistingSession() throws Exception {
     var old = new MockHttpSession();
     var oldId = old.getId();
-    var result = mvc.perform(post("/api/sso-login").servletPath("/api/sso-login").session(old)
+    var result = mvc.perform(post("/api/sso-login").servletPath("/api/sso-login").header("Origin", "https://abc.sso.com").session(old)
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
         .param("userid", "jsmith").param("token", "secret").param("context", "app").param("env", "test"))
         .andExpect(status().isSeeOther()).andReturn();
@@ -74,7 +75,7 @@ class SsoFlowTest {
   @Test void failedLoginRedirectsWithoutSession() throws Exception {
     when(service.login(anyString(), anyString(), anyString(), anyString()))
         .thenThrow(new IllegalArgumentException("Invalid"));
-    var result = mvc.perform(post("/api/sso-login").servletPath("/api/sso-login")
+    var result = mvc.perform(post("/api/sso-login").servletPath("/api/sso-login").header("Origin", "https://abc.sso.com")
         .contentType(MediaType.APPLICATION_FORM_URLENCODED))
         .andExpect(status().isSeeOther()).andExpect(redirectedUrl("https://abc.sso.com/"))
         .andReturn();
@@ -83,7 +84,7 @@ class SsoFlowTest {
   @Test void upstreamFailureRedirectsToSso() throws Exception {
     when(service.login(anyString(), anyString(), anyString(), anyString()))
         .thenThrow(new org.springframework.web.client.RestClientException("Unavailable"));
-    mvc.perform(post("/api/sso-login").servletPath("/api/sso-login")
+    mvc.perform(post("/api/sso-login").servletPath("/api/sso-login").header("Origin", "https://abc.sso.com")
         .contentType(MediaType.APPLICATION_FORM_URLENCODED))
         .andExpect(status().isSeeOther()).andExpect(redirectedUrl("https://abc.sso.com/"));
   }
@@ -128,5 +129,43 @@ class SsoFlowTest {
         .contentType(MediaType.APPLICATION_FORM_URLENCODED))
         .andExpect(status().isSeeOther()).andExpect(redirectedUrl("https://abc.sso.com/"));
     verifyNoInteractions(service);
+  }
+  @Test void localPreflightSucceedsWithoutSession() throws Exception {
+    mvc.perform(options("/api/data").header("Origin", "http://localhost:8080")
+        .header("Access-Control-Request-Method", "POST")
+        .header("Access-Control-Request-Headers", "content-type,x-csrf-token"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8080"))
+        .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+  }
+  @Test void localUnauthenticatedResponseHasCorsHeaders() throws Exception {
+    mvc.perform(get("/api/auth/me").header("Origin", "http://localhost:8080"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8080"))
+        .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+  }
+  @Test void localSessionWorksWithCorsAndCsrf() throws Exception {
+    var session = login();
+    String body = mvc.perform(get("/api/auth/me").session(session)
+        .header("Origin", "http://localhost:8080"))
+        .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    String token = com.jayway.jsonpath.JsonPath.read(body, "$.csrfToken");
+    mvc.perform(post("/api/data").session(session).header("Origin", "http://localhost:8080")
+        .header("X-CSRF-TOKEN", token).contentType(MediaType.APPLICATION_JSON)
+        .content("{\"value\":\"test\"}"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8080"));
+  }
+  @Test void corsDoesNotBypassCsrf() throws Exception {
+    mvc.perform(post("/api/data").session(login()).header("Origin", "http://localhost:8080")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"value\":\"test\"}"))
+        .andExpect(status().isForbidden())
+        .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8080"));
+  }
+  @Test void untrustedCorsOriginIsRejected() throws Exception {
+    mvc.perform(options("/api/data").header("Origin", "http://untrusted.example")
+        .header("Access-Control-Request-Method", "POST"))
+        .andExpect(status().isForbidden())
+        .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
   }
 }

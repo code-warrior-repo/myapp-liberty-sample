@@ -5,3 +5,5 @@ frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend-war/src/main/webapp/
+frontend/.env*.local
+**/server.env

@@ -59,15 +59,15 @@ NEXT_PUBLIC_API_BASE defaults to /backend; keep frontend and API on the same pub
 The backend Liberty instance owns the HttpOnly/Secure/Lax cookie with /backend path. Lax supports the
 cross-site form submission followed by a top-level GET redirect. Only the SSO login
 POST is exempt from CSRF validation; authenticated writes remain protected.
-Use public HTTPS for browser testing. Both internal HTTP listeners assume TLS
+For deployed environments, use public HTTPS for browser testing. Both internal HTTP listeners assume TLS
 termination at the proxy. The browser sees one origin, so frontend requests to
 /backend go through the proxy to port 8081 without CORS configuration. A relative
 redirect to /frontend/ goes through the proxy to port 8080. The session cookie's
 /backend path keeps it off frontend asset requests; sessions live only in the backend.
 
-Directly browsing host:8080/frontend bypasses this routing: /backend would then
-hit port 8080. Use the HTTPS proxy for local end-to-end SSO testing as well. Setting
-a browser API URL to host:8081 would require separate CORS and HTTPS configuration.
+For direct local development on localhost:8080 and localhost:8081, use the
+separate local configurations and CORS setup documented in LOCAL_DEV.md. Standard
+production builds continue to use the HTTPS proxy and relative /backend path.
 
 The two instances serve different applications and do not need shared sessions.
 If you later run multiple backend replicas, configure backend session persistence

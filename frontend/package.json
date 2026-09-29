@@ -1,1 +1,14 @@
-{"name":"myapp-frontend","private":true,"scripts":{"build":"next build","dev":"next dev"},"dependencies":{"next":"16.3.6","react":"19.3.0","react-dom":"19.3.0"}}
+{
+  "name": "myapp-frontend",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --hostname localhost --port 8080",
+    "build:local": "NEXT_PUBLIC_API_BASE=http://localhost:8081/backend next build"
+  },
+  "dependencies": {
+    "next": "16.3.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}
