@@ -1,0 +1,1 @@
+{"name":"myapp-frontend","private":true,"scripts":{"build":"next build","dev":"next dev"},"dependencies":{"next":"16.3.6","react":"19.3.0","react-dom":"19.3.0"}}

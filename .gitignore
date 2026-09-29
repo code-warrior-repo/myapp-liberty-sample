@@ -1,0 +1,7 @@
+.DS_Store
+.gradle/
+**/build/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend-war/src/main/webapp/

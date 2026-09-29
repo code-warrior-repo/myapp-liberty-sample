@@ -1,0 +1,22 @@
+plugins {
+  id 'java'
+  id 'war'
+  id 'org.springframework.boot' version '4.1.1'
+}
+group='com.example'; version='1.0.0'
+java { toolchain { languageVersion=JavaLanguageVersion.of(21) } }
+repositories { mavenCentral() }
+dependencies {
+  implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
+  implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+  implementation 'org.springframework:spring-web'
+  implementation 'org.springframework.boot:spring-boot-starter-security'
+  providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.1'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation 'org.springframework.security:spring-security-test'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+tasks.named('bootWar') { archiveFileName='backend.war' }
+tasks.named('war') { enabled=false }
+
+tasks.named('test') { useJUnitPlatform() }

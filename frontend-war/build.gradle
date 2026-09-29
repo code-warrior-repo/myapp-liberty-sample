@@ -1,0 +1,5 @@
+plugins { id 'war' }
+group='com.example'; version='1.0.0'
+tasks.register('frontendBuild', Exec) { workingDir '../frontend'; commandLine(System.getProperty('os.name').toLowerCase().contains('windows') ? ['cmd','/c','npm','run','build'] : ['npm','run','build']) }
+tasks.register('copyNextExport', Sync) { dependsOn 'frontendBuild'; from '../frontend/out'; into 'src/main/webapp' }
+tasks.named('war') { dependsOn 'copyNextExport'; archiveFileName='frontend.war' }
